@@ -1,0 +1,251 @@
+import os
+
+class Client:
+    def __init__(self, cin, firstName, lastName, tel=""):
+        self._cin = cin
+        self._firstName = firstName
+        self._lastName = lastName
+        self._tel = tel
+        self.accounts = []
+    
+    def get_cin(self):
+        return self._cin
+    
+    def get_first_name(self):
+        return self._firstName
+    
+    def get_last_name(self):
+        return self._lastName
+    
+    def get_tel(self):
+        return self._tel
+
+    def set_tel(self, tel):
+        self._tel = tel
+    
+    def add_account(self, account):
+        self.accounts.append(account)
+    
+    def display(self):
+        print(f"CIN: {self._cin}, Name: {self._firstName} {self._lastName}, Tel: {self._tel}")
+    
+    def display_accounts(self):
+        print("Accounts:")
+        for account in self.accounts:
+            account.display()
+
+
+class Account:
+    total_accounts = 0
+
+    def __init__(self, owner):
+        Account.total_accounts += 1
+        self.code = Account.total_accounts
+        self.balance = 0.0
+        self.owner = owner
+        self.history = []
+    
+    def get_code(self):
+        return self.code
+    
+    def get_balance(self):
+        return self.balance
+    
+    def get_owner(self):
+        return self.owner
+
+    def credit(self, amount, source_account=None):
+        if amount <= 0:
+            print("Amount must be positive.")
+            return
+        
+        if source_account is None:
+            self.balance += amount
+            self.history.append(f"Credited: {amount} DA")
+        else:
+            if source_account.get_balance() < amount:
+                print("Insufficient balance in the source account.")
+                return
+            
+            self.balance += amount
+            source_account.debit(amount)
+            self.history.append(f"Received: {amount} DA from Account {source_account.get_code()}")
+    
+    def debit(self, amount, destination_account=None):
+        if amount <= 0:
+            print("Amount must be positive.")
+            return
+        
+        if self.balance >= amount:
+            self.balance -= amount
+            self.history.append(f"Debited: {amount} DA")
+            if destination_account is not None:
+                destination_account.credit(amount)
+                self.history.append(f"Sent: {amount} DA to Account {destination_account.get_code()}")
+        else:
+            print("Insufficient balance.")
+
+    def display(self):
+        print(f"Account Code: {self.code}")
+        print(f"Owner: {self.owner.get_first_name()} {self.owner.get_last_name()}")
+        print(f"Balance: {self.balance} DA")
+    
+    def display_transaction(self):
+        print("Transaction History:")
+        for transaction in self.history:
+            print(transaction)
+
+    @staticmethod
+    def display_total_accounts():
+        print("Total accounts created:", Account.total_accounts)
+
+
+clients = []
+accounts = []
+
+
+def find_client(cin):
+    for client in clients:
+        if client.get_cin() == cin:
+            return client
+    return None
+
+
+def find_account(code):
+    for account in accounts:
+        if account.get_code() == code:
+            return account
+    return None
+
+
+def add_client():
+    cin = input("CIN: ")
+    first_name = input("First name: ")
+    last_name = input("Last name: ")
+    telephone = input("Tel: ")
+    
+    client = Client(cin, first_name, last_name, telephone)
+    clients.append(client)
+    print("Client added successfully!")
+
+
+def create_account():
+    cin = input("Enter CIN of client: ")
+    client = find_client(cin)
+    if client is None:
+        print("Client not found!")
+    else:
+        account = Account(client)
+        client.add_account(account)
+        accounts.append(account)
+        print("Account created! Code:", account.get_code())
+
+
+def credit_account():
+    code = int(input("Account code: "))
+    account = find_account(code)
+    if account:
+        amount = float(input("Amount to credit: "))
+        account.credit(amount)
+    else:
+        print("Account not found.")
+
+
+def debit_account():
+    code = int(input("Account code: "))
+    account = find_account(code)
+    if account:
+        amount = float(input("Amount to debit: "))
+        account.debit(amount)
+    else:
+        print("Account not found.")
+
+
+def transfer_amount():
+    src_code = int(input("Source account: "))
+    dst_code = int(input("Destination account: "))
+    amount = float(input("Amount: "))
+    
+    source = find_account(src_code)
+    destination = find_account(dst_code)
+    
+    if source and destination:
+        source.debit(amount, destination)
+    else:
+        print("One of the accounts does not exist.")
+
+
+def display_client_info():
+    cin = input("CIN: ")
+    client = find_client(cin)
+    if client:
+        client.display()
+        client.display_accounts()
+    else:
+        print("Client not found.")
+
+
+def display_account_info():
+    code = int(input("Account code: "))
+    account = find_account(code)
+    if account:
+        account.display()
+    else:
+        print("Account not found.")
+
+
+def display_account_history():
+    code = int(input("Account code: "))
+    account = find_account(code)
+    if account:
+        account.display_transaction()
+    else:
+        print("Account not found.")
+
+
+def main_menu():
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("\n===== BANK MENU =====")
+        print("1 - Add Client")
+        print("2 - Create Account")
+        print("3 - Credit Account")
+        print("4 - Debit Account")
+        print("5 - Transfer Between Accounts")
+        print("6 - Display Client Info")
+        print("7 - Display Account Info")
+        print("8 - Display Account Transactions")
+        print("9 - Display Total Number of Accounts")
+        print("10 - Exit")
+        
+        choice = input("Enter your choice: ")
+        
+        if choice == "1":
+            add_client()
+        elif choice == "2":
+            create_account()
+        elif choice == "3":
+            credit_account()
+        elif choice == "4":
+            debit_account()
+        elif choice == "5":
+            transfer_amount()
+        elif choice == "6":
+            display_client_info()
+        elif choice == "7":
+            display_account_info()
+        elif choice == "8":
+            display_account_history()
+        elif choice == "9":
+            Account.display_total_accounts()
+        elif choice == "10":
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid choice. Try again.")
+        
+        input("Press Enter to continue...")
+
+
+if __name__ == "__main__":
+    main_menu()
